@@ -31,4 +31,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "prism"
+  spec.add_dependency "prism_ext"
+  spec.add_dependency "node_mutation"
 end

@@ -35,40 +35,49 @@ gem install deprewriter
 
 ## Usage
 
+Let's say you have a class `Legacy` with a deprecated method `deprecated_method` and a new method `new_method`. You can declare `deprewrite` with transformation rules.
+
 ```ruby
 require "deprewriter"
 
 class Legacy
-  def deprecated_instance_method
+  def deprecated_method(arg)
     # ...
   end
 
-  def new_instance_method
+  def new_method(arg)
     # ...
   end
 
-  extend Gem::Deprecate
-  deprewrite :deprecated_instance_method, transform_with: -> { "deprecated_instance_method -> new_instance_method" }
-
-  class << self
-    def deprecated_klass_method
-      # ...
-    end
-
-    def new_klass_method
-      # ...
-    end
-
-    extend Gem::Deprecate
-    deprewrite :deprecated_klass_method, transform_with: -> { "deprecated_klass_method -> new_klass_method" }
-  end
+  extend Deprewriter
+  deprewrite :deprecated_method, transform_with: "new_method({{arguments}})"
 end
 ```
+
+When a user program calls `deprecated_method`, it will be rewritten to `new_method`.
+
+```ruby
+legacy = Legacy.new
+legacy.deprecated_method(arg)
+```
+
+```diff
+legacy = Legacy.new
+-legacy.deprecated_method(arg)
++legacy.new_method(arg)
+```
+
+The syntax of transformation rules is taken from [Synvert](https://synvert.net/) and it uses [Prism](https://ruby.github.io/prism/) to parse and rewrite the source code. Variables in a transformation rule string like `{{arguments}}` and `{{block}}` etc. correspond to methods provided by `Prism::CallNode`.
+
+For more details, see:
+
+- [Synvert::Core::Rewriter::Instance#replace_with](https://synvert-hq.github.io/synvert-core-ruby/Synvert/Core/Rewriter/Instance.html#replace_with-instance_method).
+- [Prism::CallNode](https://docs.ruby-lang.org/en/master/Prism/CallNode.html)
 
 ## TODO
 
 - [ ] Complete major deprecation scenarios
-  - [ ] Rename method
+  - [x] Rename method
   - [ ] Remove argument(-s)
   - [ ] Add argument(-s)
   - [ ] Change receiver
@@ -77,7 +86,9 @@ end
   - [ ] Push down
   - [ ] Deprecate class
   - [ ] Complex replacement
-- [ ] Decide DSL for transformation rules
+- [x] Decide DSL for transformation rules
+  - [x] Use Synvert for now
+- [ ] Testable code structure and write tests
 
 ## Development
 
@@ -87,7 +98,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/deprewriter. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/deprewriter/blob/master/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at https://github.com/ohbarye/deprewriter. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/deprewriter/blob/master/CODE_OF_CONDUCT.md).
 
 ## License
 

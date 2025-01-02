@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "node_mutation"
+
 module Deprewriter
   # Handles source code rewriting for deprecated methods
   module Rewriter
@@ -9,18 +11,16 @@ module Deprewriter
     # @param method_name [Symbol] The name of the deprecated method
     # @param filepath [String] Path to the source file
     # @param line [Integer] Line number where the method is called
-    # @param transformation [Deprewriter::Transformation] Transformation to apply
+    # @param transform_with [String] Transformation to apply
     # @return [void]
-    def rewrite_source(method_name, filepath, line, transformation)
-      return unless transformation.respond_to?(:call)
-
+    def rewrite_source(method_name, filepath, line, transform_with)
       source = File.read(filepath)
-      rewritten_source = rewrite_method_call(source, method_name, line, transformation)
+      rewritten_source = rewritten_source(source, method_name, line, transform_with)
 
       # Write the changes back to the file if the source was modified
       if rewritten_source != source
         File.write(filepath, rewritten_source)
-        warn "NOTE: File #{filepath}:#{line} has been rewritten. The changes will take effect on the next execution."
+        warn "DEPREWRITER: File #{filepath}:#{line} has been rewritten. The changes will take effect on the next execution."
       end
     end
 
@@ -28,20 +28,27 @@ module Deprewriter
     # @param source [String] The source code
     # @param method_name [Symbol] The name of the method to rewrite
     # @param line [Integer] Line number where the method is called
-    # @param transformation [Deprewriter::Transformation] Transformation to apply
+    # @param transform_with [String] Transformation to apply
     # @return [String] The rewritten source code
-    def rewrite_method_call(source, method_name, line, transformation)
+    def rewritten_source(source, method_name, line, transform_with)
       inspector = MethodCallInspector.new(method_name, line)
       parsed_result = Prism.parse(source)
       parsed_result.value.statements.accept(inspector)
       node = inspector.node
       return source if node.nil?
 
-      # Replace the old code with new code
-      before_node = source[0...(node.location.start_offset + node.message_loc.start_column)]
-      new_code = transformation.call + (node.opening || " ") + node.arguments&.slice.to_s + node.closing.to_s + (node.block ? " " + node.block.slice : "")
+      before_node = source[0...node.location.start_offset]
+      new_code = rewritten_call_node(node, transform_with)
       after_node = source[node.location.end_offset..]
       before_node + new_code + after_node
+    end
+
+    def rewritten_call_node(node, transform_with)
+      adapter = NodeMutation::PrismAdapter.new
+      receiver_code = node.receiver ? "#{node.receiver.slice}." : ""
+
+      call_node = Prism.parse(node.slice.gsub(receiver_code, "")).value.statements.body.first
+      receiver_code + adapter.rewritten_source(call_node, transform_with)
     end
 
     # Visitor class to find method calls in the AST
