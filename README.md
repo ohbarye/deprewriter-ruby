@@ -1,28 +1,83 @@
 # Deprewriter
 
-TODO: Delete this and the text below, and describe your gem
+[![Gem Version](https://badge.fury.io/rb/deprewriter.svg)](https://rubygems.org/gems/deprewriter)
+[![Build Status](https://github.com/ohbarye/deprewriter/actions/workflows/main.yml/badge.svg)](https://github.com/ohbarye/deprewriter/actions/workflows/main.yml)
+[![RubyDoc](https://img.shields.io/badge/%F0%9F%93%9ARubyDoc-documentation-informational.svg)](https://www.rubydoc.info/gems/deprewriter)
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/deprewriter`. To experiment with that code, run `bin/console` for an interactive prompt.
+Deprewriter is an experimental gem that helps you rewrite deprecated code automatically.
+
+When library authors deprecate methods, they typically notify users through documentation and deprecation warnings at runtime. Users then need to manually update their code to stop using deprecated methods and switch to recommended alternatives. Deprewriter automates this process.
+
+This project is inspired by Deprewriter in the Pharo programming language. For more details, see "[Deprewriter: On the fly rewriting method deprecations.](https://inria.hal.science/hal-03563605/document#page=2.15&gsr=0)" (2022).
+
+## Mechanism
+
+Deprewriter rewrites caller code on the fly at runtime according to predefined transformation rules.
+
+1. Library authors define deprecation rules for methods they want to deprecate, along with transformation rules specifying how the code should be rewritten.
+2. When the program loads, Deprewriter renames the deprecated method to `_deprecated_foo` and dynamically defines a new method `foo`. This is similar to how [`Gem::Deprecate.deprecate`](https://github.com/ruby/ruby/blob/v3_4_1/lib/rubygems/deprecate.rb#L103-L121) works.
+3. When the deprecated method `foo` is called by user code, Deprewriter rewrites the caller's code according to the transformation rules. After loading the rewritten code, it calls the original `_deprecated_foo`.
+4. From then on, the next execution of the rewritten method will execute the transformed code, and as such, the deprecated method will not be invoked from that call site anymore.
 
 ## Installation
-
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
 
 Install the gem and add to the application's Gemfile by executing:
 
 ```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+bundle add deprewriter
 ```
 
 If bundler is not being used to manage dependencies, install the gem by executing:
 
 ```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+gem install deprewriter
 ```
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+require "deprewriter"
+
+class Legacy
+  def deprecated_instance_method
+    # ...
+  end
+
+  def new_instance_method
+    # ...
+  end
+
+  extend Gem::Deprecate
+  deprewrite :deprecated_instance_method, transform_with: -> { "deprecated_instance_method -> new_instance_method" }
+
+  class << self
+    def deprecated_klass_method
+      # ...
+    end
+
+    def new_klass_method
+      # ...
+    end
+
+    extend Gem::Deprecate
+    deprewrite :deprecated_klass_method, transform_with: -> { "deprecated_klass_method -> new_klass_method" }
+  end
+end
+```
+
+## TODO
+
+- [ ] Complete major deprecation scenarios
+  - [ ] Rename method
+  - [ ] Remove argument(-s)
+  - [ ] Add argument(-s)
+  - [ ] Change receiver
+  - [ ] Split method
+  - [ ] Delete method
+  - [ ] Push down
+  - [ ] Deprecate class
+  - [ ] Complex replacement
+- [ ] Decide DSL for transformation rules
 
 ## Development
 
