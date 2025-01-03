@@ -35,11 +35,8 @@ module Deprewriter
     # @param to [String] Pattern to transform to
     # @return [String] The rewritten source code
     def transform_source(source, method_name, line, to:, from: nil)
-      finder = CallSiteFinder.new(method_name, line)
-      node = finder.find(source)
-
-      transformer = Transformer.new(source, node, to)
-      transformer.transform
+      node = CallSiteFinder.new(method_name, line, from: from).find(source)
+      Transformer.new(source, node, to).transform
     end
   end
 end
