@@ -25,7 +25,11 @@ module Deprewriter
     end
   end
 
-  def deprewrite(method_name, transform_with: nil)
+  # Marks a method as deprecated and sets up automatic code rewriting
+  # @param method_name [Symbol] The name of the method to deprecate
+  # @param from [String, nil] Pattern to match for transformation
+  # @param to [String] Pattern to transform to
+  def deprewrite(method_name, to:, from: nil)
     class_eval do
       old = "_deprecated_#{method_name}"
       alias_method old, method_name
@@ -33,12 +37,13 @@ module Deprewriter
       define_method method_name do |*args, &block|
         filepath, line = Gem.location_of_caller
 
-        if !Deprewriter.skip && transform_with && File.exist?(filepath) && File.writable?(filepath)
+        if !Deprewriter.skip && File.exist?(filepath) && File.writable?(filepath)
           Deprewriter::Rewriter.rewrite_source(
             method_name,
             filepath,
             line,
-            transform_with
+            from: from,
+            to: to
           )
         else
           klass = is_a? Module

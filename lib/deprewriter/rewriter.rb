@@ -12,11 +12,12 @@ module Deprewriter
     # @param method_name [Symbol] The name of the deprecated method
     # @param filepath [String] Path to the source file
     # @param line [Integer] Line number where the method is called
-    # @param transform_with [String] Transformation to apply
+    # @param from [String, nil] Pattern to match for transformation
+    # @param to [String] Pattern to transform to
     # @return [String] The rewritten source code
-    def rewrite_source(method_name, filepath, line, transform_with)
+    def rewrite_source(method_name, filepath, line, to:, from: nil)
       source = File.read(filepath)
-      rewritten_source = transform_source(source, method_name, line, transform_with)
+      rewritten_source = transform_source(source, method_name, line, from: from, to: to)
 
       # Write the changes back to the file if the source was modified
       if rewritten_source != source && !Deprewriter.skip
@@ -30,13 +31,14 @@ module Deprewriter
     # @param source [String] The source code
     # @param method_name [Symbol] The name of the method to rewrite
     # @param line [Integer] Line number where the method is called
-    # @param transform_with [String] Transformation to apply
+    # @param from [String, nil] Pattern to match for transformation
+    # @param to [String] Pattern to transform to
     # @return [String] The rewritten source code
-    def transform_source(source, method_name, line, transform_with)
+    def transform_source(source, method_name, line, to:, from: nil)
       finder = CallSiteFinder.new(method_name, line)
       node = finder.find(source)
 
-      transformer = Transformer.new(source, node, transform_with)
+      transformer = Transformer.new(source, node, to)
       transformer.transform
     end
   end

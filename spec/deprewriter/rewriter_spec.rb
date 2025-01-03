@@ -11,7 +11,7 @@ RSpec.describe Deprewriter::Rewriter do
         source,
         :old_method,
         1,
-        "new_method({{arguments}})"
+        to: "new_method({{arguments}})"
       )
 
       expect(result).to eq <<~RUBY
@@ -30,7 +30,7 @@ RSpec.describe Deprewriter::Rewriter do
         source,
         :old_method,
         1,
-        "new_method({{arguments}}) {{block}}"
+        to: "new_method({{arguments}}) {{block}}"
       )
 
       expect(result).to eq <<~RUBY
@@ -50,7 +50,7 @@ RSpec.describe Deprewriter::Rewriter do
         source,
         :old_method,
         2,
-        "new_method({{arguments}})"
+        to: "new_method({{arguments}})"
       )
 
       expect(result).to eq <<~RUBY

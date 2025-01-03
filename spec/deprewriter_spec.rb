@@ -12,7 +12,7 @@ RSpec.describe Deprewriter do
       end
 
       extend Deprewriter
-      deprewrite :old_method, transform_with: "new_method({{arguments}})"
+      deprewrite :old_method, to: "new_method({{arguments}})"
     end
 
     Deprewriter.skip_during do
@@ -32,7 +32,7 @@ RSpec.describe Deprewriter do
       end
 
       extend Deprewriter
-      deprewrite :old_method, transform_with: "new_method({{arguments}}) {{block}}"
+      deprewrite :old_method, to: "new_method({{arguments}}) {{block}}"
     end
 
     Deprewriter.skip_during do
