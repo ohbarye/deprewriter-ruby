@@ -38,13 +38,14 @@ module Deprewriter
         filepath, line = Gem.location_of_caller
 
         if !Deprewriter.skip && File.exist?(filepath) && File.writable?(filepath)
-          Deprewriter::Rewriter.rewrite_source(
-            method_name,
-            filepath,
-            line,
-            from: from,
-            to: to
-          )
+          source = File.read(filepath)
+          rewritten_source = Rewriter.transform_source(source, method_name, line, to: to, from: from)
+
+          # Write the changes back to the file if the source was modified
+          if rewritten_source != source
+            File.write(filepath, rewritten_source)
+            warn "DEPREWRITER: File #{filepath}:#{line} has been rewritten. The changes will take effect on the next execution."
+          end
         else
           klass = is_a? Module
           target = klass ? "#{self}." : "#{self.class}#"

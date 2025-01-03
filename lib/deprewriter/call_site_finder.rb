@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "node_mutation"
-
 module Deprewriter
   # Finds method call sites in source code
   class CallSiteFinder < Prism::Visitor
