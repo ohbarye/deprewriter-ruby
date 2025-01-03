@@ -25,7 +25,7 @@ module Deprewriter
     end
   end
 
-  def deprewrite(method_name, message: nil, transform_with: nil)
+  def deprewrite(method_name, transform_with: nil)
     class_eval do
       old = "_deprecated_#{method_name}"
       alias_method old, method_name
@@ -43,7 +43,7 @@ module Deprewriter
         else
           klass = is_a? Module
           target = klass ? "#{self}." : "#{self.class}#"
-          warn message || "DEPRECATION WARNING: #{target}#{method_name} is deprecated\n#{target}#{method_name} called from #{filepath}:#{line}."
+          warn "DEPRECATION WARNING: #{target}#{method_name} is deprecated\n#{target}#{method_name} called from #{filepath}:#{line}."
         end
 
         send old, *args, &block
