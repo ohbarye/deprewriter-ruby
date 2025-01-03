@@ -30,7 +30,8 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "node_query"
+  spec.add_dependency "node_mutation"
   spec.add_dependency "prism"
   spec.add_dependency "prism_ext"
-  spec.add_dependency "node_mutation"
 end

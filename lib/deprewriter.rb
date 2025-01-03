@@ -44,12 +44,11 @@ module Deprewriter
           # Write the changes back to the file if the source was modified
           if rewritten_source != source
             File.write(filepath, rewritten_source)
-            warn "DEPREWRITER: File #{filepath}:#{line} has been rewritten. The changes will take effect on the next execution."
+            load filepath
+
+            target = is_a? Module ? "#{self}." : "#{self.class}#"
+            warn "DEPREWRITER: #{target}#{method_name} is deprecated. #{filepath}:#{line} has been rewritten."
           end
-        else
-          klass = is_a? Module
-          target = klass ? "#{self}." : "#{self.class}#"
-          warn "DEPRECATION WARNING: #{target}#{method_name} is deprecated\n#{target}#{method_name} called from #{filepath}:#{line}."
         end
 
         send old, *args, &block
