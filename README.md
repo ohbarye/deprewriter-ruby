@@ -35,13 +35,13 @@ gem install deprewriter
 
 ## Usage
 
-Let's say you have a class `Legacy` with a deprecated method `deprecated_method` and a new method `new_method`. You can declare `deprewrite` with transformation rules.
+Let's say you have a class `Legacy` with a deprecated method `old_method` and a new method `new_method`. You can declare `deprewrite` with transformation rules.
 
 ```ruby
 require "deprewriter"
 
 class Legacy
-  def deprecated_method(arg)
+  def old_method(arg)
     # ...
   end
 
@@ -50,24 +50,32 @@ class Legacy
   end
 
   extend Deprewriter
-  deprewrite :deprecated_method, transform_with: "new_method({{arguments}})"
+  deprewrite :old_method, to: "new_method({{arguments}})"
 end
 ```
 
-When a user program calls `deprecated_method`, it will be rewritten to `new_method`.
+When a user program calls `old_method`, it will be rewritten to `new_method`.
 
 ```ruby
 legacy = Legacy.new
-legacy.deprecated_method(arg)
+legacy.old_method(arg) # This line will be rewritten
 ```
 
 ```diff
 legacy = Legacy.new
--legacy.deprecated_method(arg)
+-legacy.old_method(arg)
 +legacy.new_method(arg)
 ```
 
-The syntax of transformation rules is taken from [Synvert](https://synvert.net/) and it uses [Prism](https://ruby.github.io/prism/) to parse and rewrite the source code. Variables in a transformation rule string like `{{arguments}}` and `{{block}}` etc. correspond to methods provided by `Prism::CallNode`.
+You can also specify a pattern to match for transformation using the `from` option:
+
+```ruby
+deprewrite :old_method,
+  from: '.call_node[name=old_method]', # Rewrite calls only when matched
+  to: 'new_method({{arguments}})'
+```
+
+The syntax of transformation rules is taken from [Synvert](https://synvert.net/) and it uses [Prism](https://ruby.github.io/prism/) to parse and rewrite the source code. Variables in a transformation rule string like `{{arguments}}` and `{{block}}` etc. correspond to methods provided by Prism node.
 
 For more details, see:
 
