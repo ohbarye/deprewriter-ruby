@@ -10,15 +10,6 @@ When library authors deprecate methods, they typically notify users through docu
 
 This project is inspired by Deprewriter in the Pharo programming language. For more details, see "[Deprewriter: On the fly rewriting method deprecations.](https://inria.hal.science/hal-03563605/document#page=2.15&gsr=0)" (2022).
 
-## Mechanism
-
-Deprewriter rewrites caller code on the fly at runtime according to predefined transformation rules.
-
-1. Library authors define deprecation rules for methods they want to deprecate, along with transformation rules specifying how the code should be rewritten.
-2. When the program loads, Deprewriter renames the deprecated method to `_deprecated_foo` and dynamically defines a new method `foo`. This is similar to how [`Gem::Deprecate.deprecate`](https://github.com/ruby/ruby/blob/v3_4_1/lib/rubygems/deprecate.rb#L103-L121) works.
-3. When the deprecated method `foo` is called by user code, Deprewriter rewrites the caller's code according to the transformation rules. After loading the rewritten code, it calls the original `_deprecated_foo`.
-4. From then on, the next execution of the rewritten method will execute the transformed code, and as such, the deprecated method will not be invoked from that call site anymore.
-
 ## Installation
 
 Install the gem and add to the application's Gemfile by executing:
@@ -35,9 +26,10 @@ gem install deprewriter
 
 ## Usage
 
-Let's say you have a class `Legacy` with a deprecated method `old_method` and a new method `new_method`. You can declare `deprewrite` with transformation rules.
+Let's say a library code has a class `Legacy` with a deprecated method `old_method` and a new method `new_method`. The code owner can declare `deprewrite` with transformation rules.
 
 ```ruby
+# Library code
 require "deprewriter"
 
 class Legacy
@@ -54,18 +46,29 @@ class Legacy
 end
 ```
 
-When a user program calls `old_method`, it will be rewritten to `new_method`.
+And then, when a user program calls `old_method` with the following code:
 
 ```ruby
+# User code
 legacy = Legacy.new
-legacy.old_method(arg) # This line will be rewritten
+legacy.old_method(arg) # This line will trigger Deprewriter
 ```
+
+If a user program runs with `DEPREWRITER=log` environment variable...
+
+```bash
+DEPREWRITER=1 ruby your_script.rb
+```
+
+...it will log a warning with the suggested changes to rewrite the code:
 
 ```diff
 legacy = Legacy.new
 -legacy.old_method(arg)
 +legacy.new_method(arg)
 ```
+
+### For code owners
 
 You can also specify a pattern to match for transformation using the `from` option:
 
@@ -82,21 +85,68 @@ For more details, see:
 - [Synvert::Core::Rewriter::Instance#replace_with](https://synvert-hq.github.io/synvert-core-ruby/Synvert/Core/Rewriter/Instance.html#replace_with-instance_method).
 - [Prism::CallNode](https://docs.ruby-lang.org/en/master/Prism/CallNode.html)
 
+### For client users
+
+Deprewriter can be configured either through environment variables or programmatically. There are three modes of operation:
+
+### Environment Variable Configuration
+
+Set the `DEPREWRITER` environment variable to one of these values:
+
+- `log` - For logging mode. Logs deprecation warnings and shows diffs (default)
+- `diff` - For diff mode. Creates diff files for each deprecation
+- `dangerously_rewrite` - For rewrite mode. Automatically rewrites files (use with caution!)
+- If not set, Deprewriter will be disabled
+
+Example:
+
+```ruby
+# Deprewriter is disabled
+ruby your_script.rb
+
+# Deprewriter is enabled as log mode.
+DEPREWRITER=1 ruby your_script.rb
+DEPREWRITER=log ruby your_script.rb
+
+# Deprewriter is enabled as diff mode.
+DEPREWRITER=diff ruby your_script.rb
+
+# Deprewriter is enabled as rewrite mode.
+DEPREWRITER=dangerously_rewrite ruby your_script.rb
+```
+
+### Programmatic Configuration
+
+You can configure Deprewriter programmatically using the configuration block:
+
+```ruby
+Deprewriter.configure do |config|
+  # Set the mode (:log, :diff, :rewrite, or :disabled)
+  config.mode = :log
+
+  # Configure custom logger (defaults to STDOUT)
+  config.logger = Logger.new('deprewriter.log')
+end
+```
+
+## Mechanism
+
+Deprewriter determines caller code at runtime and attempts to rewrite it according to predefined transformation rules, though the actual rewriting depends on the configured mode and file permissions.
+
+1. Library authors define deprecation rules for methods they want to deprecate, along with transformation rules specifying how the code should be rewritten.
+2. When the program loads, Deprewriter renames the deprecated method to `_deprecated_foo` and dynamically defines a new method `foo`. This is similar to how [`Gem::Deprecate.deprecate`](https://github.com/ruby/ruby/blob/v3_4_1/lib/rubygems/deprecate.rb#L103-L121) works.
+3. When the deprecated method `foo` is called by user code, Deprewriter analyzes the caller's code and generates a transformation according to the rules. Depending on the configured mode. In all cases, it calls the original `_deprecated_foo` to preserve the original behavior.
+4. If the file was successfully rewritten, subsequent executions will use the transformed code. Otherwise, the deprecated method will continue to be called and generate warnings/diffs on each invocation.
+
 ## TODO
 
-- [ ] Complete major deprecation scenarios
-  - [x] Rename method
-  - [ ] Remove argument(-s)
-  - [ ] Add argument(-s)
-  - [ ] Change receiver
-  - [ ] Split method
-  - [ ] Delete method
-  - [ ] Push down
-  - [ ] Deprecate class
-  - [ ] Complex replacement
+- [x] Complete major deprecation scenarios
+  - Rename method
+  - Remove argument(-s)
+  - Add argument(-s)
 - [x] Decide DSL for transformation rules
   - [x] Use Synvert for now
-- [ ] Testable code structure and write tests
+- [x] Testable code structure and write tests
 
 ## Development
 
