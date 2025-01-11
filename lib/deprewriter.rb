@@ -4,24 +4,19 @@ require "prism"
 require_relative "deprewriter/version"
 
 module Deprewriter
-  autoload :Rewriter, "deprewriter/rewriter"
+  autoload :Configuration, "deprewriter/configuration"
   autoload :CallSiteFinder, "deprewriter/call_site_finder"
+  autoload :Diff, "deprewriter/diff"
+  autoload :Rewriter, "deprewriter/rewriter"
   autoload :Transformer, "deprewriter/transformer"
 
   class << self
-    def skip
-      @skip ||= false
+    def config
+      @config ||= Configuration.new
     end
 
-    attr_writer :skip
-
-    # Temporarily disable rewriting. Intended for tests only.
-    def skip_during
-      original = skip
-      self.skip = true
-      yield
-    ensure
-      self.skip = original
+    def configure
+      yield config if block_given?
     end
   end
 
@@ -30,6 +25,8 @@ module Deprewriter
   # @param from [String, nil] Pattern to match for transformation
   # @param to [String] Pattern to transform to
   def deprewrite(method_name, to:, from: nil)
+    return if Deprewriter.config.enabled?
+
     class_eval do
       old = "_deprecated_#{method_name}"
       alias_method old, method_name
@@ -37,17 +34,29 @@ module Deprewriter
       define_method method_name do |*args, &block|
         filepath, line = Gem.location_of_caller
 
-        if !Deprewriter.skip && File.exist?(filepath) && File.writable?(filepath)
+        if File.exist?(filepath)
           source = File.read(filepath)
           rewritten_source = Rewriter.transform_source(source, method_name, line, to: to, from: from)
+          diff = Diff.new(source, rewritten_source, filepath)
 
-          # Write the changes back to the file if the source was modified
-          if rewritten_source != source
-            File.write(filepath, rewritten_source)
-            load filepath
+          if diff.different?
+            target = is_a?(Module) ? "#{self}." : "#{self.class}#"
 
-            target = is_a? Module ? "#{self}." : "#{self.class}#"
-            warn "DEPREWRITER: #{target}#{method_name} is deprecated. #{filepath}:#{line} has been rewritten."
+            case Deprewriter.config.mode
+            in :rewrite
+              if File.writable?(filepath)
+                Deprewriter.config.logger.warn "DEPREWRITER: Dangerously trying to rewrite. It will rewrite a file to apply the deprecation and load the file"
+                File.write(filepath, diff.rewritten_source)
+                load filepath
+              else
+                Deprewriter.config.logger.error "DEPREWRITER: Failed to rewrite #{filepath} because it is not writable."
+              end
+            in :diff
+              File.write(File.join(Dir.pwd, diff.id), diff.to_s)
+            in :log
+              Deprewriter.config.logger.warn "DEPREWRITER: #{target}#{method_name} usage at #{filepath}:#{line} is deprecated." \
+                " You can apply the diff below to resolve the deprecation.\n#{diff}"
+            end
           end
         end
 
