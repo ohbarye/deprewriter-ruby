@@ -37,7 +37,7 @@ module Deprewriter
         if File.exist?(filepath)
           source = File.read(filepath)
           rewritten_source = Rewriter.transform_source(source, method_name, line, to: to, from: from)
-          diff = Diff.new(source, rewritten_source, File.join('.', filepath))
+          diff = Diff.new(source, rewritten_source, File.join(".", filepath))
 
           if diff.different?
             target = is_a?(Module) ? "#{self}." : "#{self.class}#"
