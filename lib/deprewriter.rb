@@ -25,7 +25,7 @@ module Deprewriter
   # @param from [String, nil] Pattern to match for transformation
   # @param to [String] Pattern to transform to
   def deprewrite(method_name, to:, from: nil)
-    return if Deprewriter.config.enabled?
+    return if !Deprewriter.config.enabled?
 
     class_eval do
       old = "_deprecated_#{method_name}"
