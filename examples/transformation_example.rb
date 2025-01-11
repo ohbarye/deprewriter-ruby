@@ -13,7 +13,7 @@ class Legacy
   end
 
   extend Deprewriter
-  deprewrite :old_method, transform_with: "new_method({{arguments}}) {{block}}"
+  deprewrite :old_method, to: "new_method({{arguments}}) {{block}}"
 
   class << self
     def old_method(arg)
@@ -25,7 +25,7 @@ class Legacy
     end
 
     extend Deprewriter
-    deprewrite :old_method, transform_with: "new_method({{arguments}}) {{block}}"
+    deprewrite :old_method, to: "new_method({{arguments}}) {{block}}"
   end
 end
 
