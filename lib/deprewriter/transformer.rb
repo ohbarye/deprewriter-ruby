@@ -31,7 +31,7 @@ module Deprewriter
       receiver_code = @node.receiver ? "#{@node.receiver.slice}." : ""
 
       call_node = Prism.parse(@node.slice.gsub(receiver_code, "")).value.statements.body.first
-      receiver_code + adapter.rewritten_source(call_node, @transform_with)
+      receiver_code + adapter.rewritten_source(call_node, @transform_with).each_line.map(&:rstrip).join("\n")
     end
   end
 end
