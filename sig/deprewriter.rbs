@@ -1,4 +1,7 @@
 module Deprewriter
   VERSION: String
   # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+
+  # Marks a method as deprecated and sets up automatic code rewriting
+  def deprewrite: (Symbol method_name, to: String, ?from: String?) -> void
 end
