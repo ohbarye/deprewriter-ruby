@@ -96,7 +96,7 @@ Deprewriter can be configured either through environment variables or programmat
 Set the `DEPREWRITER` environment variable to one of these values:
 
 - `log` - For logging mode. Logs deprecation warnings and shows diffs (default)
-- `diff` - For diff mode. Creates diff files for each deprecation
+- `diff` - For diff mode. Creates patch files for each deprecation
 - `dangerously_rewrite` - For rewrite mode. Automatically rewrites files (use with caution!)
 - If not set, Deprewriter will be disabled
 
@@ -149,6 +149,9 @@ Deprewriter determines caller code at runtime and attempts to rewrite it accordi
 - [x] Decide DSL for transformation rules
   - [x] Use Synvert for now
 - [x] Testable code structure and write tests
+- [x] Skip redundant rewrite, when the same code is rewritten multiple times
+- [ ] Reduce other gem dependencies to be a standalone gem
+- [ ] Handle more complex cases, e.g. metaprogramming, DSLs, etc.
 
 ## Development
 
