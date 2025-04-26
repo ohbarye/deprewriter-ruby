@@ -4,7 +4,7 @@ require "logger"
 
 module Deprewriter
   class Configuration
-    attr_accessor :mode, :logger
+    attr_accessor :mode, :logger, :skip_redundant_rewrite
 
     def initialize
       @mode = case ENV["DEPREWRITER"]
@@ -21,6 +21,7 @@ module Deprewriter
       end
 
       @logger = Logger.new($stdout)
+      @skip_redundant_rewrite = true # Test purpose
     end
 
     def enabled?

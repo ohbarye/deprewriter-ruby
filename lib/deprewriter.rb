@@ -18,6 +18,10 @@ module Deprewriter
     def configure
       yield config if block_given?
     end
+
+    def processed_location_of_callers
+      @processed_location_of_callers ||= Set.new
+    end
   end
 
   # Marks a method as deprecated and sets up automatic code rewriting
@@ -33,8 +37,10 @@ module Deprewriter
 
       define_method method_name do |*args, &block|
         filepath, line = Gem.location_of_caller
+        location_of_caller = "#{filepath}:#{line}"
+        skippable = Deprewriter.config.skip_redundant_rewrite && Deprewriter.processed_location_of_callers.include?(location_of_caller)
 
-        if File.exist?(filepath)
+        if File.exist?(filepath) && !skippable
           source = File.read(filepath)
           rewritten_source = Rewriter.transform_source(source, method_name, line, to: to, from: from)
           diff = Diff.new(source, rewritten_source, File.join(".", filepath))
@@ -57,6 +63,8 @@ module Deprewriter
                 " You can apply the diff below to resolve the deprecation.\n#{diff}"
             end
           end
+
+          Deprewriter.processed_location_of_callers << location_of_caller if Deprewriter.config.skip_redundant_rewrite
         end
 
         send old, *args, &block
