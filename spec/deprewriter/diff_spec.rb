@@ -45,7 +45,7 @@ RSpec.describe Deprewriter::Diff do
       second_id = diff.id
 
       expect(first_id).to eq(second_id)
-      expect(first_id).to match(/\Adeprewriter_[a-f0-9]{32}\.diff\z/)
+      expect(first_id).to match(/\Adeprewriter_[a-f0-9]{32}\.patch\z/)
     end
 
     it "generates different hash for different diffs" do

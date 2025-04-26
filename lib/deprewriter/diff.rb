@@ -34,7 +34,7 @@ module Deprewriter
     end
 
     def id
-      "deprewriter_#{Digest::MD5.hexdigest(to_s)}.diff"
+      "deprewriter_#{Digest::MD5.hexdigest(to_s)}.patch"
     end
   end
 end

@@ -40,7 +40,7 @@ RSpec.describe Deprewriter do
 
   after do
     FileUtils.rm_rf(File.dirname(test_file))
-    FileUtils.rm(Dir.glob("deprewriter_*.diff"))
+    FileUtils.rm(Dir.glob("deprewriter_*.patch"))
 
     Deprewriter.configure do |config|
       config.mode = :disabled
@@ -72,7 +72,7 @@ RSpec.describe Deprewriter do
 
         instance.old_method(42)
 
-        diff_files = Dir.glob("deprewriter_*.diff")
+        diff_files = Dir.glob("deprewriter_*.patch")
         expect(diff_files).not_to be_empty
 
         diff_content = File.read(diff_files.first)
