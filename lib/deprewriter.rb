@@ -45,9 +45,8 @@ module Deprewriter
             case Deprewriter.config.mode
             in :rewrite
               if File.writable?(filepath)
-                Deprewriter.config.logger.warn "DEPREWRITER: Dangerously trying to rewrite. It will rewrite a file to apply the deprecation and load the file"
+                Deprewriter.config.logger.warn "DEPREWRITER: Dangerously trying to rewrite. It will rewrite a file to apply the deprecation but won't load the file"
                 File.write(filepath, diff.rewritten_source)
-                load filepath
               else
                 Deprewriter.config.logger.error "DEPREWRITER: Failed to rewrite #{filepath} because it is not writable."
               end
