@@ -10,6 +10,8 @@ When library authors deprecate methods, they typically notify users through docu
 
 This project is inspired by Deprewriter in the Pharo programming language. For more details, see "[Deprewriter: On the fly rewriting method deprecations.](https://inria.hal.science/hal-03563605/document#page=2.15&gsr=0)" (2022).
 
+For more details about this gem and its implementation, see the presentation at RubyKaigi 2025: [On-the-fly Suggestions of Rewriting Method Deprecations](https://rubykaigi.org/2025/presentations/ohbarye.html).
+
 ## Installation
 
 Install the gem and add to the application's Gemfile by executing:
