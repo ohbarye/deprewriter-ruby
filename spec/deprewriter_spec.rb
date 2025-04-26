@@ -33,10 +33,15 @@ RSpec.describe Deprewriter do
   before do
     FileUtils.mkdir_p(File.dirname(test_file))
     File.write(test_file, test_source)
+    Deprewriter.configure do |config|
+      config.skip_redundant_rewrite = false
+    end
   end
 
   after do
     FileUtils.rm_rf(File.dirname(test_file))
+    FileUtils.rm(Dir.glob("deprewriter_*.diff"))
+
     Deprewriter.configure do |config|
       config.mode = :disabled
     end
@@ -73,8 +78,6 @@ RSpec.describe Deprewriter do
         diff_content = File.read(diff_files.first)
         expect(diff_content).to include("-    old_method(42)")
         expect(diff_content).to include("+    new_method")
-
-        FileUtils.rm(diff_files.first)
       end
     end
 
